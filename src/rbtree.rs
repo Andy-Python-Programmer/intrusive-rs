@@ -1132,6 +1132,72 @@ where
         }
     }
 
+    /// Moves the cursor to the parent of current element in the `RBTree`.
+    ///
+    /// If the cursor is null or pointing to the root object then this will return None.
+    #[inline]
+    pub fn move_parent(&mut self) {
+        if let Some(current) = self.current {
+            self.current = unsafe { self.tree.adapter.link_ops().parent(current) }
+        } else {
+            self.current = None;
+        }
+    }
+
+    /// Moves the cursor to the left of current element in the `RBTree`.
+    ///
+    /// If the cursor is null object then this will return None.
+    #[inline]
+    pub fn move_left(&mut self) {
+        if let Some(current) = self.current {
+            self.current = unsafe { self.tree.adapter.link_ops().left(current) }
+        } else {
+            self.current = None;
+        }
+    }
+
+    /// Moves the cursor to the right of current element in the `RBTree`.
+    ///
+    /// If the cursor is null object then this will return None.
+    #[inline]
+    pub fn move_right(&mut self) {
+        if let Some(current) = self.current {
+            self.current = unsafe { self.tree.adapter.link_ops().right(current) }
+        } else {
+            self.current = None;
+        }
+    }
+
+    /// Returns a cursor pointing to the parent of current element in the `RBTree`
+    ///
+    /// If the cursor is null or pointing to the root object then this will return None.
+    #[inline]
+    pub fn peek_parent(&self) -> Cursor<'_, A> {
+        let mut parent = self.clone();
+        parent.move_parent();
+        parent
+    }
+
+    /// Returns a cursor pointing to the left of current element in the `RBTree`
+    ///
+    /// If the cursor is null object then this will return None.
+    #[inline]
+    pub fn peek_left(&self) -> Cursor<'_, A> {
+        let mut left = self.clone();
+        left.move_left();
+        left
+    }
+
+    /// Returns a cursor pointing to the right of current element in the `RBTree`
+    ///
+    /// If the cursor is null object then this will return None.
+    #[inline]
+    pub fn peek_right(&self) -> Cursor<'_, A> {
+        let mut right = self.clone();
+        right.move_right();
+        right
+    }
+
     /// Returns a cursor pointing to the next element of the `RBTree`.
     ///
     /// If the cursor is pointer to the null object then this will return the
@@ -1154,6 +1220,12 @@ where
         let mut prev = self.clone();
         prev.move_prev();
         prev
+    }
+
+    /// Returns the color of this node. `None` if the cursor is null.
+    pub fn color(&self) -> Option<Color> {
+        self.current
+            .map(|current| unsafe { self.tree.adapter.link_ops().color(current) })
     }
 }
 
@@ -1652,6 +1724,24 @@ where
     ) -> CursorOwning<A> {
         CursorOwning {
             current: Some(self.adapter.get_link(ptr)),
+            tree: self,
+        }
+    }
+
+    /// Returns a `Cursor` pointing to the root element of the tree. If the
+    /// tree is empty then a null cursor is returned.
+    pub fn root(&self) -> Cursor<'_, A> {
+        Cursor {
+            current: self.root,
+            tree: self,
+        }
+    }
+
+    /// Returns a `CursorMut` pointing to the root element of the tree. If the
+    /// tree is empty then a null cursor is returned.
+    pub fn root_mut(&mut self) -> CursorMut<'_, A> {
+        CursorMut {
+            current: self.root,
             tree: self,
         }
     }
